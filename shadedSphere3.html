@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<!-- saved from url=(0106)http://www.cs.unm.edu/~angel/BOOK/INTERACTIVE_COMPUTER_GRAPHICS/SEVENTH_EDITION/CODE/06/shadedSphere3.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252"><script id="vertex-shader" type="x-shader/x-vertex">
+
+attribute vec4 vPosition;
+attribute vec4 vNormal;
+
+varying vec4 fColor;
+varying vec3 Nv, Lv, Ev;
+uniform vec4 ambientProduct, diffuseProduct, specularProduct;
+uniform mat4 modelViewMatrix;
+uniform mat4 transformationMatrix;
+uniform mat4 projectionMatrix;
+uniform vec4 lightPosition;
+uniform int vertexShadingType;
+uniform float shininess;
+
+
+void
+main()
+{
+	if(vertexShadingType == 0){ //flat shading
+		vec3 pos = (modelViewMatrix * transformationMatrix * vPosition).xyz;
+		vec3 L = normalize((modelViewMatrix * lightPosition).xyz - pos);
+		vec3 E = normalize(-pos);
+		vec3 H = normalize( L + E );
+		vec3 N = normalize(mat3(modelViewMatrix) * mat3(transformationMatrix) * vNormal.xyz);
+
+		// Compute terms in the illumination equation
+		vec4 ambient = ambientProduct;
+
+		float Kd = max( dot(L, N), 0.0 );
+		vec4  diffuse = Kd * diffuseProduct;
+
+		float Ks = pow( max(dot(N, H), 0.0), shininess );
+		vec4  specular = Ks * specularProduct;
+		
+		if( dot(L, N) < 0.0 ) specular = vec4(0.0, 0.0, 0.0, 1.0);
+
+		gl_Position = projectionMatrix * modelViewMatrix * transformationMatrix * vPosition;
+		
+		fColor = ambient + diffuse + specular;
+
+		fColor.a = 1.0;
+	}
+	else if(vertexShadingType == 1){ //Gouraud shading
+		vec3 pos = (modelViewMatrix * transformationMatrix * vPosition).xyz;
+		vec3 L = normalize((modelViewMatrix * lightPosition).xyz - pos);
+		vec3 E = normalize(-pos);
+		vec3 H = normalize( L + E );
+		vec3 N = normalize(mat3(modelViewMatrix) * mat3(transformationMatrix) * vPosition.xyz);
+
+		// Compute terms in the illumination equation
+		vec4 ambient = ambientProduct;
+
+		float Kd = max( dot(L, N), 0.0 );
+		vec4  diffuse = Kd * diffuseProduct;
+
+		float Ks = pow( max(dot(N, H), 0.0), shininess );
+		vec4  specular = Ks * specularProduct;
+		
+		if( dot(L, N) < 0.0 ) specular = vec4(0.0, 0.0, 0.0, 1.0);
+
+		gl_Position = projectionMatrix * modelViewMatrix * transformationMatrix * vPosition;
+		
+		fColor = ambient + diffuse + specular;
+
+		fColor.a = 1.0;
+	}
+	else if(vertexShadingType == 2){ //Blinn-Phong shading
+		vec3 pos = (modelViewMatrix * transformationMatrix * vPosition).xyz;
+		Lv = normalize((modelViewMatrix * lightPosition).xyz - pos);
+		Ev = normalize(-pos);
+		Nv = normalize(mat3(modelViewMatrix) * mat3(transformationMatrix) * vPosition.xyz);
+		
+		gl_Position = projectionMatrix * modelViewMatrix * transformationMatrix * vPosition;
+	}
+	else if(vertexShadingType == 3){ //no shading
+		gl_Position = projectionMatrix * modelViewMatrix * transformationMatrix * vPosition;
+	}
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+
+precision mediump float;
+uniform int fragmentShadingType;
+uniform vec4 ambientProductF, diffuseProductF, specularProductF;
+uniform float shininessF;
+varying vec4 fColor;
+varying vec3 Nv, Lv, Ev;
+
+void
+main()
+{
+	if(fragmentShadingType == 0){ //flat shading
+		gl_FragColor = fColor;
+	}
+	else if(fragmentShadingType == 1){ //Gouraud shading
+		gl_FragColor = fColor;
+	}
+	else if(fragmentShadingType == 2){ //Blinn-Phong shading
+		vec4 fColorP;
+		vec3 Hv = normalize(Lv + Ev);
+		vec4 ambient = ambientProductF;
+
+		float Kd = max( dot(Lv, Nv), 0.0 );
+		vec4  diffuse = Kd * diffuseProductF;
+
+		float Ks = pow( max(dot(Nv, Hv), 0.0), shininessF );
+		vec4  specular = Ks * specularProductF;
+		
+		if( dot(Lv, Nv) < 0.0 ) specular = vec4(0.0, 0.0, 0.0, 1.0);
+		
+		fColorP = ambient + diffuse + specular;
+
+		fColorP.a = 1.0;
+		
+		gl_FragColor = fColorP;
+	}
+	else if(fragmentShadingType == 3){ //no shading
+		gl_FragColor = vec4(0.7, 0.7, 1.0, 1.0);
+	}
+}
+</script>
+
+</head><body>
+
+<script type="text/javascript" src="./shadedSphere3_files/webgl-utils.js"></script>
+<script type="text/javascript" src="./shadedSphere3_files/initShaders.js"></script>
+
+<script type="text/javascript" src="./shadedSphere3_files/MV.js"></script>
+<script type="text/javascript" src="./shadedSphere3_files/shadedSphere3.js"></script>
+
+
+<canvas id="gl-canvas" width="960" height="540">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+
+
+</body></html>
